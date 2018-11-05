@@ -106,3 +106,29 @@ describe('GET /todos/:id', () => {
           .end(done)
     })
 })
+
+describe('DELETE /todos/:id', () => {
+    it('should delete todo doc', (done) => {
+        request(app)
+          .delete('/todos/' + dummyTodos[0]._id.toHexString())
+          .expect(200)
+          .expect((res) => {
+              expect(res.body.todo.text).toBe(dummyTodos[0].text)
+          })
+          .end(done)
+    })
+
+    it('should return 404 if todo not found', (done) => {
+        request(app)
+          .delete('/todos/' + (new ObjectID()).toHexString())
+          .expect(404)
+          .end(done)
+    })
+
+    it('should return 404 if non-object ID', (done) => {
+        request(app)
+          .delete('/todos/123')
+          .expect(404)
+          .end(done)
+    })    
+})

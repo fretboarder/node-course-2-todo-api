@@ -15,7 +15,7 @@ const {MongoClient, ObjectID} = require('mongodb')
 // }).catch((reason) => {
 //     console.log('Failure: ', reason)
 // })
-MongoClient.connect('mongodb://localhost:27017/TodoApp')
+MongoClient.connect('mongodb://localhost:27017')
 .then((client) => {
     const db = client.db('TodoApp')
     return db.collection('Users').insertOne({

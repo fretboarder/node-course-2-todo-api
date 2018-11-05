@@ -109,13 +109,23 @@ describe('GET /todos/:id', () => {
 
 describe('DELETE /todos/:id', () => {
     it('should delete todo doc', (done) => {
+        const hexId = dummyTodos[1]._id.toHexString()
         request(app)
-          .delete('/todos/' + dummyTodos[0]._id.toHexString())
+          .delete('/todos/' + hexId)
           .expect(200)
           .expect((res) => {
-              expect(res.body.todo.text).toBe(dummyTodos[0].text)
+              expect(res.body.todo._id).toBe(hexId)
           })
-          .end(done)
+          .end((err, res) => {
+              if (err) {
+                  done(err)
+              }
+              Todo.findById(hexId).then((todo) => {
+                expect(todo).toNotExist
+                done()
+              })
+              .catch((e) => done(e))
+          })
     })
 
     it('should return 404 if todo not found', (done) => {

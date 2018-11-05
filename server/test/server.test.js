@@ -13,7 +13,9 @@ const dummyTodos = [
     },
     {
         _id: new ObjectID(),
-        text: "Dummy Todo 2"
+        text: "Dummy Todo 2",
+        completed: true,
+        completedAt: 333
     }
 ]
 
@@ -147,4 +149,42 @@ describe('DELETE /todos/:id', () => {
           .expect(404)
           .end(done)
     })    
+})
+
+describe('PATCH /todos/:id', () => {
+    it('should update todo doc', (done) => {
+        const hexId = dummyTodos[0]._id.toHexString()
+        const newText = 'Updated Dummy Doc 1'
+        request(app)
+          .patch('/todos/' + hexId)
+          .send({
+              text : newText,
+              completed: true
+          })
+          .expect(200)
+          .expect((res) => {
+              expect(res.body.todo.text).toBe(newText)
+              expect(res.body.todo.completed).toBe(true)
+              expect(typeof res.body.todo.completedAt).toBe('number')
+          })
+          .end(done)
+    })
+
+    it('should clear completedAt when todo is not completed', (done) => {
+        const hexId = dummyTodos[1]._id.toHexString()
+        const newText = 'Updated Dummy Doc 2'
+        request(app)
+          .patch('/todos/' + hexId)
+          .send({
+              text : newText,
+              completed: false
+          })
+          .expect(200)
+          .expect((res) => {
+              expect(res.body.todo.text).toBe(newText)
+              expect(res.body.todo.completed).toBe(false)
+              expect(res.body.todo.completedAt).toBeNull()
+          })
+          .end(done)
+    })
 })

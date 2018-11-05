@@ -125,6 +125,12 @@ describe('DELETE /todos/:id', () => {
                 done()
               })
               .catch((e) => done(e))
+
+            //   Todo.find().then((todos) => {
+            //     expect(todos.length).toBe(dummyTodos.length -)
+            //     done()
+            //   })
+            //   .catch((e) => done(e))
           })
     })
 

@@ -72,6 +72,22 @@ UserSchema.statics.findByToken = function(token) {
     })
 }
 
+
+UserSchema.statics.findByCredentials = function(email, password) {
+    const User = this
+    return User.findOne({email}).then((user) => {
+        if (!user) {
+            return Promise.reject()
+        }
+        // returns a Promise
+        return bcrypt.compare(password, user.password).then((match) => {
+            if (match) return Promise.resolve(user)
+            else       return Promise.reject()
+        })
+    })
+}
+
+
 // mongoose middleware, triggered before document is saved
 UserSchema.pre('save', function(next) {
     const user = this

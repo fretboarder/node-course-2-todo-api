@@ -210,7 +210,7 @@ describe('POST /users', () => {
         .send({email, password})
         .expect(200)
         .expect((res) => {
-            expect(res.headers['x-auth'].length).toBeTruthy()
+            expect(res.headers['x-auth']).toBeTruthy()
             expect(res.body._id.length).toBeTruthy()
             expect(res.body.email).toBe(email)
         })
@@ -234,6 +234,51 @@ describe('POST /users', () => {
         .post('/users')
         .send({email, password})
         .expect(400)
-        .end(done())        
+        .end(done)        
+    })
+})
+
+
+describe('POST /users/login', () => {
+    it('should login user and return auth token', (done) => {
+        const {email, password} = users[1]
+        request(app)
+        .post('/users/login')
+        .send({email, password})
+        .expect(200)
+        .expect((res) => {
+            expect(res.headers['x-auth']).toBeTruthy()
+        })
+        .end((err, res) => {
+            if (err) {
+                return done(err)
+            }
+            User.findById(users[1]._id).then((user) => {
+                expect(user.tokens[0]).toHaveProperty('access','auth')
+                expect(user.tokens[0]).toHaveProperty('token', res.headers['x-auth'])
+                done()
+            }).catch((e) => done(e))   
+        })
+    })
+
+    it('should reject invalid login', (done) => {
+        const {email} = users[1]
+        const password = 'bullshit'
+        request(app)
+        .post('/users/login')
+        .send({email, password})
+        .expect(400)
+        .expect((res) => {
+            expect(res.headers['x-auth']).toBeFalsy()
+        })
+        .end((err, res) => {
+            if (err) {
+                return done(err)
+            }
+            User.findById(users[1]._id).then((user) => {
+                expect(user.tokens.length).toBe(0)
+                done()
+            }).catch((e) => done(e))   
+        })       
     })
 })

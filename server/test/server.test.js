@@ -4,27 +4,13 @@ const {ObjectID} = require('mongodb')
 
 const {app} = require('../server')
 const {Todo} = require('../models/todo')
+const {User} = require('../models/user')
+const {populateTodos, todos, populateUsers, users} = require('./seed/seed')
 
 
-const dummyTodos = [
-    {
-        _id: new ObjectID(),
-        text: "Dummy Todo 1"
-    },
-    {
-        _id: new ObjectID(),
-        text: "Dummy Todo 2",
-        completed: true,
-        completedAt: 333
-    }
-]
+beforeEach(populateUsers)
+beforeEach(populateTodos)
 
-
-beforeEach((done) => {
-    Todo.remove({}).then(() => {
-        return Todo.insertMany(dummyTodos)
-    }).then(() => done())
-})
 
 
 describe('POST /todos', () => {
@@ -86,10 +72,10 @@ describe('GET /todos', () => {
 describe('GET /todos/:id', () => {
     it('should get todo doc', (done) => {
         request(app)
-          .get('/todos/' + dummyTodos[0]._id.toHexString())
+          .get('/todos/' + todos[0]._id.toHexString())
           .expect(200)
           .expect((res) => {
-              expect(res.body.todo.text).toBe(dummyTodos[0].text)
+              expect(res.body.todo.text).toBe(todos[0].text)
           })
           .end(done)
     })
@@ -111,7 +97,7 @@ describe('GET /todos/:id', () => {
 
 describe('DELETE /todos/:id', () => {
     it('should delete todo doc', (done) => {
-        const hexId = dummyTodos[1]._id.toHexString()
+        const hexId = todos[1]._id.toHexString()
         request(app)
           .delete('/todos/' + hexId)
           .expect(200)
@@ -129,7 +115,7 @@ describe('DELETE /todos/:id', () => {
               .catch((e) => done(e))
 
             //   Todo.find().then((todos) => {
-            //     expect(todos.length).toBe(dummyTodos.length -)
+            //     expect(todos.length).toBe(todos.length -)
             //     done()
             //   })
             //   .catch((e) => done(e))
@@ -153,7 +139,7 @@ describe('DELETE /todos/:id', () => {
 
 describe('PATCH /todos/:id', () => {
     it('should update todo doc', (done) => {
-        const hexId = dummyTodos[0]._id.toHexString()
+        const hexId = todos[0]._id.toHexString()
         const newText = 'Updated Dummy Doc 1'
         request(app)
           .patch('/todos/' + hexId)
@@ -171,7 +157,7 @@ describe('PATCH /todos/:id', () => {
     })
 
     it('should clear completedAt when todo is not completed', (done) => {
-        const hexId = dummyTodos[1]._id.toHexString()
+        const hexId = todos[1]._id.toHexString()
         const newText = 'Updated Dummy Doc 2'
         request(app)
           .patch('/todos/' + hexId)
@@ -186,5 +172,68 @@ describe('PATCH /todos/:id', () => {
               expect(res.body.todo.completedAt).toBeNull()
           })
           .end(done)
+    })
+})
+
+
+describe('GET /users/me', () => {
+    it('should return user if authenticated', (done) => {
+        request(app)
+        .get('/users/me')
+        .set('x-auth', users[0].tokens[0].token)
+        .expect(200)
+        .expect((res) => {
+            expect(res.body._id).toBe(users[0]._id.toHexString())
+            expect(res.body.email).toBe(users[0].email)
+        })
+        .end(done)
+    })
+
+    it('should return 401 if not authenticated', (done) => {
+        request(app)
+        .get('/users/me')
+        .expect(401)
+        .expect((res) => {
+            expect(res.body).toEqual({})
+        })
+        .end(done)
+    })
+})
+
+describe('POST /users', () => {
+    it('should create a user', (done) => {
+        const email = 'example@example.com'
+        const password = '123abc'
+
+        request(app)
+        .post('/users')
+        .send({email, password})
+        .expect(200)
+        .expect((res) => {
+            expect(res.headers['x-auth'].length).toBeTruthy()
+            expect(res.body._id.length).toBeTruthy()
+            expect(res.body.email).toBe(email)
+        })
+        .end(done)
+    })
+
+    it('should return validation errors if request invalid', (done) => {
+        const email = 'notanemailaddress'
+        const password = '123'
+        request(app)
+        .post('/users')
+        .send({email, password})
+        .expect(400)
+        .end(done)
+    })
+
+    it('should not create user if email in use', (done) => {
+        const email = users[0].email
+        const password = '123abc'
+        request(app)
+        .post('/users')
+        .send({email, password})
+        .expect(400)
+        .end(done())        
     })
 })

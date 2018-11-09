@@ -9,7 +9,7 @@ const authenticate = (req, res, next) => {
         req.user = user
         req.token = token
         next()
-    }).catch((e) => {
+    }).catch(() => {
         res.status(401).send()
     })    
 }

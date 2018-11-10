@@ -124,7 +124,7 @@ describe('DELETE /todos/:id', () => {
                   done(err)
               }
               Todo.findById(hexId).then((todo) => {
-                expect(todo).toBeNull()
+                expect(todo).toBeFalsy()
                 done()
               })
               .catch((e) => done(e))
@@ -214,7 +214,7 @@ describe('PATCH /todos/:id', () => {
           .expect((res) => {
               expect(res.body.todo.text).toBe(newText)
               expect(res.body.todo.completed).toBe(false)
-              expect(res.body.todo.completedAt).toBeNull()
+              expect(res.body.todo.completedAt).toBeFalsy()
           })
           .end(done)
     })
@@ -259,7 +259,16 @@ describe('POST /users', () => {
             expect(res.body._id.length).toBeTruthy()
             expect(res.body.email).toBe(email)
         })
-        .end(done)
+        .end((err) => {
+            if (err) {
+                return done(err)
+            }
+            User.findOne({email}).then((user) => {
+                expect(user).toBeTruthy()
+                expect(user.password).not.toBe(password)
+                done()
+            }).catch((e) => done(e))
+        })
     })
 
     it('should return validation errors if request invalid', (done) => {
@@ -299,8 +308,10 @@ describe('POST /users/login', () => {
                 return done(err)
             }
             User.findById(users[1]._id).then((user) => {
-                expect(user.tokens[1]).toHaveProperty('access','auth')
-                expect(user.tokens[1]).toHaveProperty('token', res.headers['x-auth'])
+                expect(user.toObject().tokens[1]).toMatchObject({
+                    access: 'auth',
+                    token: res.headers['x-auth']
+                })
                 done()
             }).catch((e) => done(e))   
         })

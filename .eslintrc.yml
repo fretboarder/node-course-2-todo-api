@@ -7,7 +7,7 @@ parserOptions:
   sourceType: module
 rules:
   indent:
-    - warning
+    - 0
     - 4
   linebreak-style:
     - error
